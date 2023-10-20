@@ -3,13 +3,56 @@ let offsets = [];
 let rotationSpeeds = [];
 let rotationDirections = [];
 let increasingSpeed = [];
-const maxSpeed = 0.003;
+const maxSpeed = 0.002;
 const minSpeed = 0.0;
 const speedIncrement = 0.000001;
 
+let animationPaused = false;
+
+function pauseAnimation() {
+  noLoop();
+  animationPaused = true;
+  //print('paused')
+
+}
+
+function resumeAnimation() {
+  loop();
+  animationPaused = false;
+  //print('running')
+}
+
+function mousePressed() {
+  if (animationPaused) {
+    resumeAnimation();
+  } else {
+    pauseAnimation();
+  }
+}
+
+function checkVisibility() {
+    const options = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                resumeAnimation();
+            } else {
+                pauseAnimation();
+            }
+        });
+    }, options);
+
+    observer.observe(document.querySelector('canvas'));
+}
+
 function setup() {
     createCanvas(800, 800, WEBGL);
-    background(0);
+    background(0,0,0,0);
     noiseDetail(0.5, 0.65);
 
     let circles = 9;
@@ -19,6 +62,7 @@ function setup() {
         rotationDirections.push(random() > 0.5 ? 1 : -1);
         increasingSpeed.push(true); // All circles start by increasing in speed
     }
+  checkVisibility();
 }
 
 function draw() {
