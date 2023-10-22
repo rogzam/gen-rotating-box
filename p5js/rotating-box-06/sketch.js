@@ -1,6 +1,6 @@
-let circles = 11;
+let circles = 12;
 let ringRotationSpeed = 5;
-let resetDelayFrames = 350;
+let resetDelayFrames = 400;
 let globalNoiseOffset = 0;
 
 const baseSpinSpeed = 0.0002;
@@ -11,16 +11,50 @@ let ringDissipationRates = [];
 let previousNoiseValues = [];
 let lastActiveRing = -1;
 
+let forcePlayTime = null;
+let isAnimating = false;
+
 function setup() {
   createCanvas(800, 800, WEBGL);
   background(0,0,0,0);
-  noiseDetail(1, 0.65);
+  noiseDetail(2, 0.65);
 
   for (let i = 0; i < circles; i++) {
     ringDissipation.push(0);
     ringDissipationRates.push(random(0.002, 0.007));
     previousNoiseValues.push(0.5);
   }
+
+  canvas = document.querySelector('canvas');
+  canvas.addEventListener("mouseover", function() {
+    if (!forcePlayTime) {
+      isAnimating = true;
+      loop();
+    }
+  });
+
+  canvas.addEventListener("mouseout", function() {
+    if (!forcePlayTime || (forcePlayTime && millis() - forcePlayTime > 10000)) {
+      isAnimating = false;
+      noLoop();
+    }
+  });
+
+  canvas.addEventListener("click", function() {
+    if (forcePlayTime) {
+      if (millis() - forcePlayTime < 10000) {
+        forcePlayTime = null;
+        isAnimating = false;
+        noLoop();
+      }
+    } else {
+      forcePlayTime = millis();
+      isAnimating = true;
+      loop();
+    }
+  });
+
+  noLoop();
 }
 
 function draw() {
@@ -44,6 +78,20 @@ function draw() {
       currentHeight += lerp(5, 1740, (i + 1) / (circles - 1));
     }
   }
+
+  if (forcePlayTime && millis() - forcePlayTime > 10000) {
+    forcePlayTime = null;
+    if (!isMouseOverCanvas()) {
+      isAnimating = false;
+      noLoop();
+    }
+  }
+}
+
+function isMouseOverCanvas() {
+  let canvasX = (windowWidth - width) / 2;
+  let canvasY = (windowHeight - height) / 2;
+  return mouseX > canvasX && mouseX < canvasX + width && mouseY > canvasY && mouseY < canvasY + height;
 }
 
 function setCameraAndPerspective() {
