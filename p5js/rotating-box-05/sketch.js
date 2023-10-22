@@ -8,6 +8,9 @@ let rotationDirections = [];
 let increasingSpeed = [];
 let rotateRings = true;
 
+let forcePlayTime = null;
+let isAnimating = false;
+
 function setup() {
     createCanvas(800, 800, WEBGL);
     background(0, 0, 0, 0);
@@ -20,6 +23,37 @@ function setup() {
         rotationDirections.push(random() > 0.5 ? 1 : -1);
         increasingSpeed.push(true);
     }
+
+    canvas = document.querySelector('canvas');
+    canvas.addEventListener("mouseover", function() {
+        if (!forcePlayTime) {
+            isAnimating = true;
+            loop();
+        }
+    });
+
+    canvas.addEventListener("mouseout", function() {
+        if (!forcePlayTime || (forcePlayTime && millis() - forcePlayTime > 10000)) {
+            isAnimating = false;
+            noLoop();
+        }
+    });
+
+    canvas.addEventListener("click", function() {
+        if (forcePlayTime) {
+            if (millis() - forcePlayTime < 10000) {
+                forcePlayTime = null;
+                isAnimating = false;
+                noLoop();
+            }
+        } else {
+            forcePlayTime = millis();
+            isAnimating = true;
+            loop();
+        }
+    });
+
+    noLoop();
 }
 
 function draw() {
@@ -42,6 +76,14 @@ function draw() {
     for (let i = 0; i < circles; i++) {
         rotateAndDrawRing(circles, i, totalHeight, currentHeight, pointsPerCircle, circleRadius, cubeSize);
         if (i != circles - 1) currentHeight += lerp(startingSpacing, endingSpacing, (i + 1) / (circles - 1));
+    }
+
+    if (forcePlayTime && millis() - forcePlayTime > 10000) {
+        forcePlayTime = null;
+        if (!isMouseOverCanvas()) {
+            isAnimating = false;
+            noLoop();
+        }
     }
 }
 
@@ -73,6 +115,11 @@ function rotateAndDrawRing(circles, i, totalHeight, currentHeight, pointsPerCirc
         drawCubeInRing(i, j, pointsPerCircle, circleRadius, cubeSize);
     }
     pop();
+    if (i === circles - 1 && forcePlayTime && millis() - forcePlayTime >= 10000) {
+        forcePlayTime = null;
+        isAnimating = false;
+        noLoop();
+    }
 }
 
 function adjustRotation(i) {
@@ -112,3 +159,10 @@ function rotateCube(angle, noiseFactor, cubeSize) {
     rotateX(rotate_deg);
     box(cubeSize);
 }
+
+function isMouseOverCanvas() {
+    const canvasX = (windowWidth - width) / 2;
+    const canvasY = (windowHeight - height) / 2;
+    return mouseX > canvasX && mouseX < canvasX + width && mouseY > canvasY && mouseY < canvasY + height;
+}
+
